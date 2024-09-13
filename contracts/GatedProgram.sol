@@ -54,6 +54,10 @@ contract GatedProgram{
     mapping(uint256 => bool) public isAttending; // tracks a user with ID is attending a program of programID
     mapping(address => bool) public attendee; // tracks a user with ID is attending a program of programID
 
+    constructor(address _gatedToken){
+      gatedToken = _gatedToken;
+    }
+
 
     function createProgram( uint256 _programID,
         address _creator,
