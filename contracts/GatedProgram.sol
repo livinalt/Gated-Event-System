@@ -1,20 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import "./GatedToken.sol";
+
 contract GatedProgram{
-    /* 
-    tis contract is used to manage Programs. so that 
-    1. a participant needs to mint before they register
-    2. a participant can register for the Program
-    3. a participant can choose to not attend/deregister.
 
-     */
+    GatedToken public gatedToken;
 
-     /* 
-     1. we need users to register on the platform
-     2. we need users to create the Programs for participant to register
-     3. Every Program needs to have its own nft
-     4. this nft is what users need to have */
+    event ProgramCreated(uint256 indexed _programID, string indexed  _title, uint256 indexed _programDate, uint256 _programDuration);
+    event UserRegisterd(uint256 indexed _userID, address indexed _userAddress, string indexed _userName);
+    event ProgramRegistered(address indexed participant, uint256 indexed _programID, bool indexed);
 
      struct Program{
         uint256 programID;
@@ -23,9 +18,12 @@ contract GatedProgram{
         string desc;
         uint256 programDate;
         uint256 programDuration;
+        address[] attendees;
      }
 
      Program public newProgram;
+
+     Program[] public allPrograms;
 
      mapping(uint256 => Program) public programID; // holds the list of all attenders of the program
      mapping(uint256 => bool) public programExists; // returns true if programId exists
@@ -38,6 +36,7 @@ contract GatedProgram{
      }
 
      User public newUser;
+     User[] public allUser;
 
      mapping(address => User) public allUsers; // returns the addresses of all the users on the event platform
      mapping(uint256 => bool) public userIdExist; // mapping of userId to the bool tracking if a user is registerd on the event platform
@@ -48,6 +47,8 @@ contract GatedProgram{
         uint256 programID;
         address participantAddress;
      }
+
+     Participant[] public allParticipants;
     
     mapping(uint256 => Participant) public programs; // connects particpant to event they are attending/ registered for
     mapping(uint256 => bool) public isAttending; // tracks a user with ID is attending a program of programID
@@ -69,6 +70,11 @@ contract GatedProgram{
         newProgram.desc = _desc;
         newProgram.programDate = _programDate;
         newProgram.programDuration = _programDuration;
+        newProgram.attendees.push(msg.sender);
+
+        allPrograms.push(newProgram);
+
+        emit ProgramCreated(_programID, _title, _programDate, _programDuration);
 
      }
     
@@ -86,22 +92,31 @@ contract GatedProgram{
         newUser.userName = _userName;
         newUser.isRegistered = true;
 
+        allUser.push(newUser);
+
+        emit UserRegisterd(_userID, _userAddress, _userName);
+
      }
 
 
      function registerForProgram(uint256 _programID) external{
-        require(_programID > 0, "Id doesn't exist");
+
+        require(isUser[msg.sender], "You are not registered");
+        // The program must have been created/existed
+        require(programExists[_programID], "Program doesn't exist");
+
+        require(gatedToken.balanceOf(msg.sender) == 1, "Must have an NFT to register");
         // the user must be a registerd member of the platform
-        require(isUser[msg.sender], "you are not registered");
-        // the program must have been created/existed
-        require(programExists[_programID],"program doesn't exist");
+        require(_programID > 0, "Id doesn't exist");
         
         attendee[msg.sender] = true;
+
+        emit ProgramRegistered(msg.sender, _programID, true);
 
      }
 
      function deregisterForProgram(uint256 _programID) external{
-        require(_programID > 0, "Id doesn't exist");
+         require(_programID > 0, "Id doesn't exist");
         // the user must be a registerd member of the platform
         require(isUser[msg.sender], "you are not registered");
         // the program must have been created/existed
@@ -115,10 +130,20 @@ contract GatedProgram{
        
      }
 
-    function getAllPrograms() external{
+     function getAllPrograms() external view returns (Program[] memory) {
+         return allPrograms;
+      }
 
-    }
-    
+
+     function getAllUsers() external view returns (User[] memory) {
+         return allUser;
+      }
+
+
+     function geUserProgram() external view returns (Program memory, User memory) {
+         return (newProgram, newUser);   
+      }
+
 
 
 }
