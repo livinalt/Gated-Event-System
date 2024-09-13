@@ -6,6 +6,7 @@ import "./GatedToken.sol";
 contract GatedProgram{
 
     GatedToken public gatedToken;
+    address public gatedTokenAddress;
 
     event ProgramCreated(uint256 indexed _programID, string indexed  _title, uint256 indexed _programDate, uint256 _programDuration);
     event UserRegisterd(uint256 indexed _userID, address indexed _userAddress, string indexed _userName);
@@ -54,8 +55,9 @@ contract GatedProgram{
     mapping(uint256 => bool) public isAttending; // tracks a user with ID is attending a program of programID
     mapping(address => bool) public attendee; // tracks a user with ID is attending a program of programID
 
-    constructor(address _gatedToken){
-      gatedToken = _gatedToken;
+    
+    constructor(address _gatedTokenAddress){
+      gatedTokenAddress = _gatedTokenAddress;
     }
 
 
